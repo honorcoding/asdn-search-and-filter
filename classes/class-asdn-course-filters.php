@@ -54,6 +54,11 @@ class asdnCourseFilters extends asdnSearchAndFilter {
             $this->AddShortcode( 'sfc_course_partner_field', 'CoursePartnerFieldShortcode' );
             self::AddFilterRemovalOption('sfc_course_partner');    
             
+            asdnURLParams::RegisterURLParam('sfc_materials');
+            $this->AddURLParamHook('MaterialsURLParamHook');
+            $this->AddShortcode( 'sfc_materials_field', 'MaterialsFieldShortcode' );
+            self::AddFilterRemovalOption('sfc_materials');    
+            
             asdnURLParams::RegisterURLParam('sfc_featured_course');
             $this->AddURLParamHook('FeaturedCourseURLParamHook');
             $this->AddShortcode( 'sfc_new_courses_field', 'NewCoursesFieldShortcode' );
@@ -770,6 +775,98 @@ class asdnCourseFilters extends asdnSearchAndFilter {
                 $o .= '<div class="sfc_course_partner sf_dropdown">';
                     $o .= '<label>'.$label.'</label>';
                     $o .= $course_partner_dropdown;
+                $o .= '</div>';
+
+            $o .= '</div>';
+
+            return $o;
+    
+    }     
+    
+    //
+    //  * Hook to extract course partner param from URL and add to query args
+    //  * 
+    //  * @return void
+    //
+    public function MaterialsURLParamHook() {
+            if ( self::GetQueryArg('post_type') == 'course' ) {
+                $sfc_materials = asdnURLParams::GetURLParam( 'sfc_materials' );
+                if ( $sfc_materials ) {
+                    // get course_partner param and set query args
+                    $tax_query = array(
+                        array(
+                            'taxonomy' => 'materials', 
+                            'field' => 'name',       
+                            'terms' => urldecode( $sfc_materials ),
+                            'include_children' => true,       
+                            'operator' => 'IN'                
+                        )                    
+                    );                
+                    self::AddQueryArg( 'tax_query', $tax_query, true );                    
+                }
+            }
+    }    
+    
+    //
+    //  * Shortcode to display the course_partner field
+    //  *
+    //  * @return html markup
+    //
+    public function MaterialsFieldShortcode( $atts = array(), $content = null ) {
+
+            // default parameters
+            extract(shortcode_atts(array(
+                    'label'             => 'Materials',
+                    'post_type'         => 'course',
+                    'class'             => '',                
+            ), $atts));
+            
+            // get a list of active terms
+            $terms_args = array(
+                    'taxonomy' => 'materials',
+                    'hide_empty' => false,
+            );
+            $terms = get_terms( $terms_args );
+            
+            // determine which course_partner option is currently selected
+            $current_materials = asdnURLParams::GetURLParam('sfc_materials');
+            
+            $selected_materials = '';
+            foreach( $terms as $term ) {
+                if ( asdnURLParams::GetURLSafeText($current_materials) == asdnURLParams::GetURLSafeText($term->name) ) {
+                    $selected_materials = asdnURLParams::GetURLSafeText( $current_materials );
+                    break;
+                }
+            }            
+            
+            // drop down mark-up
+            $materials_dropdown = '<select id="sfc_materials_field" '.self::GetDropDownFilterScript('sfc_materials_field').' >';
+
+                // option blank
+                $materials_dropdown .= '<option '; 
+                $url_all_removed = asdnURLParams::RemoveParamFromURL( 'sfc_materials', asdnURLParams::GetCurrentURL() );
+                $materials_dropdown .= ' value="'.$url_all_removed.'" ';
+                $materials_dropdown .= ( $selected_materials == '' ) ? ' selected ' : '';
+                $materials_dropdown .= ' >All</option>';                 
+
+                foreach( $terms as $term ) {
+
+                    // create dropdown code 
+                    $materials_dropdown .= '<option '; 
+                    $materials_dropdown .= ' value="'.self::AddParamRemovePageFromCurrentURL( 'sfc_materials', $term->name ).'" ';
+                    $materials_dropdown .= (  $selected_materials == asdnURLParams::GetURLSafeText( $term->name )  ) ? ' selected ' : '';
+                    $materials_dropdown .= ' >'.$term->name.'</option>';                    
+                    
+                }
+                
+            $materials_dropdown .= '</select>'; 
+            
+            // render widget
+            $o = '<div class="sf_sidebar_widget">';
+            
+                $o .= '<div class="sfc_materials sf_dropdown">';
+                    $o .= '<label>'.$label.'</label>';
+                    $o .= $materials_dropdown;
                 $o .= '</div>';
 
             $o .= '</div>';

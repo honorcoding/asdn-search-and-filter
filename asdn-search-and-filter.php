@@ -4,6 +4,7 @@
 Plugin Name: ASDN Search and Filter
 Plugin URI: https://asdn.org
 Description: Enhanced search and filters on Custom Post Types 
+Version: 1.3
 Text Domain: asdn-search-and-filter
 */
 
@@ -50,6 +51,7 @@ require_once 'vimeo/asdn-vimeo.php';
 //===================================================
 //=           PREPARE CUSTOM POST TYPES             =
 //===================================================
+require_once 'custom-post-type/custom-post-types.php';
 //require_once 'custom-post-type/asdn-course-custom-fields.php';  // handles custom fields for "course" cpt
 
 
